@@ -220,7 +220,7 @@ PAGE = {
     "desc": "분당 출장마사지·홈타이 안내 페이지입니다. 정자동, 서현동, 수내동, 야탑동, 판교동과 분당구 주요 지하철역 인근, 테마별 관리, 예약 전 확인사항을 확인해보세요.",
     "h1": "분당 출장마사지·홈타이 예약 안내",
     "body": _BODY,
-    "extra_head": _JSONLD,
+    "extra_head": '<meta name="naver-site-verification" content="ecbf20e63800fac1c2fd954421bb9b09d9d45ac9" />\n' + _JSONLD,
     "breadcrumb": [],
     "hero": _HERO,
 }
