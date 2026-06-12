@@ -45,8 +45,32 @@ python3 build.py
 - 상단/하위 메뉴와 푸터에 키워드·지역명·역명 대량 나열 없음
 - 모든 페이지 본문은 페이지별 고유 작성 (지역명만 바꾼 복붙 없음)
 
-## 배포 전 해야 할 일
+## 색인 (네이버·구글 빠른 색인)
 
-1. `content/site.py`의 `BASE_URL`을 실제 도메인으로 변경
-2. `python3 build.py` 재실행 (canonical·sitemap·robots.txt에 반영됨)
-3. Google Search Console에 `sitemap.xml` 제출
+도메인: **https://bundang-massage.pages.dev** (`content/site.py`의 `BASE_URL`)
+
+빌드 시 자동 생성되는 색인 파일:
+
+- `sitemap.xml` — 색인 59페이지, `lastmod`(매거진은 발행일)·`changefreq`·`priority` 포함
+- `rss.xml` — RSS 2.0 피드 (네이버 서치어드바이저 RSS 제출용, 전 페이지 head에 자동탐색 링크)
+- `robots.txt` — Sitemap 경로 고지
+- `{32자리}.txt` — IndexNow 키 파일 (네이버·빙 즉시 색인 통보용)
+
+배포 직후 실행:
+
+```bash
+python3 tools/notify_search.py                      # IndexNow — 네이버·빙·얀덱스 즉시 통보
+python3 tools/notify_search.py --google sa.json     # + 구글 Indexing API (서비스 계정 필요)
+```
+
+1회 수동 등록:
+
+1. **네이버 서치어드바이저** — 소유확인(메인페이지 메타태그 등록됨) 후
+   `요청 > 사이트맵 제출`에 `https://bundang-massage.pages.dev/sitemap.xml`,
+   `요청 > RSS 제출`에 `https://bundang-massage.pages.dev/rss.xml` 제출.
+   급한 페이지는 `요청 > 웹 페이지 수집`으로 개별 요청
+2. **Google Search Console** — 속성 등록 후 `Sitemaps`에 `sitemap.xml` 제출.
+   주요 페이지는 `URL 검사 > 색인 생성 요청`. (구글은 IndexNow 미참여,
+   사이트맵 핑 엔드포인트는 2023년 폐지되어 lastmod 갱신이 최신성 신호)
+3. 구글 Indexing API를 쓰려면 `tools/notify_search.py` 상단 주석의
+   서비스 계정 발급·Search Console 소유자 추가 절차 참고

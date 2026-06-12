@@ -8,6 +8,7 @@ content/ 패키지의 페이지 정의를 읽어 정적 HTML을 생성한다.
   - sitemap.xml 에는 index 허용 페이지만 포함
   - 지역+역+테마 조합 경로는 생성 자체가 불가능한 구조
 """
+import datetime
 import html
 import os
 import re
@@ -144,6 +145,7 @@ def render_page(page: dict) -> str:
 <meta name="description" content="{desc}">
 {robots}
 <link rel="canonical" href="{canonical}">
+<link rel="alternate" type="application/rss+xml" title="{BRAND} RSS" href="{BASE_URL.rstrip('/')}/rss.xml">
 <meta property="og:type" content="website">
 <meta property="og:title" content="{title}">
 <meta property="og:description" content="{desc}">
@@ -250,9 +252,26 @@ def render_page(page: dict) -> str:
 """
 
 
+def _page_priority(path: str) -> str:
+    """URL 깊이 기준 우선순위 — 메인 1.0, 허브 0.8, 상세 0.6."""
+    if path == "":
+        return "1.0"
+    if path in ("bundang/", "bundang/stations/", "themes/", "massage/", "magazine/"):
+        return "0.8"
+    return "0.6"
+
+
+def _rfc822(date_str: str) -> str:
+    """YYYY-MM-DD → RFC 822 (RSS pubDate). KST 기준."""
+    d = datetime.datetime.strptime(date_str, "%Y-%m-%d")
+    return d.strftime("%a, %d %b %Y 09:00:00 +0900")
+
+
 def build() -> None:
     report = []
-    sitemap_urls = []
+    sitemap_entries = []  # (url, lastmod, priority)
+    rss_items = []        # (url, title, desc, date)
+    today = datetime.date.today().isoformat()
 
     for page in PAGES:
         path = page["path"]  # "" 또는 "bundang/jeongja-dong/" 형태
@@ -265,18 +284,56 @@ def build() -> None:
         chars = text_length(page["body"])
         noindex = page.get("noindex", False) or chars < MIN_INDEX_CHARS
         if not noindex:
-            sitemap_urls.append(BASE_URL.rstrip("/") + "/" + path)
+            url = BASE_URL.rstrip("/") + "/" + path
+            lastmod = page.get("date", today)
+            sitemap_entries.append((url, lastmod, _page_priority(path)))
+            rss_items.append((url, page["title"], page["desc"], lastmod))
         report.append((path or "/", chars, "noindex" if noindex else "index"))
 
-    # sitemap.xml
+    # sitemap.xml — lastmod·priority 포함 (네이버·구글 색인 최신성 신호)
     urls = "\n".join(
-        f"  <url><loc>{u}</loc></url>" for u in sitemap_urls
+        "  <url>"
+        f"<loc>{html.escape(u)}</loc>"
+        f"<lastmod>{lm}</lastmod>"
+        f"<changefreq>{'daily' if pr in ('1.0', '0.8') else 'weekly'}</changefreq>"
+        f"<priority>{pr}</priority>"
+        "</url>"
+        for u, lm, pr in sitemap_entries
     )
     with open(os.path.join(ROOT, "sitemap.xml"), "w", encoding="utf-8") as f:
         f.write(
             '<?xml version="1.0" encoding="UTF-8"?>\n'
             '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
             f"{urls}\n</urlset>\n"
+        )
+
+    # rss.xml — 네이버 서치어드바이저 RSS 제출용 (매거진 글은 발행일, 그 외는 빌드일)
+    base = BASE_URL.rstrip("/")
+    rss_items.sort(key=lambda it: it[3], reverse=True)
+    items = "\n".join(
+        "    <item>\n"
+        f"      <title>{html.escape(title)}</title>\n"
+        f"      <link>{html.escape(url)}</link>\n"
+        f"      <guid isPermaLink=\"true\">{html.escape(url)}</guid>\n"
+        f"      <description>{html.escape(desc)}</description>\n"
+        f"      <pubDate>{_rfc822(date)}</pubDate>\n"
+        "    </item>"
+        for url, title, desc, date in rss_items
+    )
+    with open(os.path.join(ROOT, "rss.xml"), "w", encoding="utf-8") as f:
+        f.write(
+            '<?xml version="1.0" encoding="UTF-8"?>\n'
+            '<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">\n'
+            "  <channel>\n"
+            f"    <title>{html.escape(BRAND)} — 분당 출장마사지·홈타이 안내</title>\n"
+            f"    <link>{base}/</link>\n"
+            "    <description>분당구 전지역 방문 관리(출장마사지·홈타이) 안내와 지역·역세권·테마별 가이드, 매거진 콘텐츠를 제공합니다.</description>\n"
+            "    <language>ko</language>\n"
+            f"    <lastBuildDate>{_rfc822(today)}</lastBuildDate>\n"
+            f'    <atom:link href="{base}/rss.xml" rel="self" type="application/rss+xml" />\n'
+            f"{items}\n"
+            "  </channel>\n"
+            "</rss>\n"
         )
 
     # robots.txt
@@ -294,7 +351,7 @@ def build() -> None:
     for p, c, r in sorted(report):
         flag = "" if (r == "noindex" or MIN_INDEX_CHARS <= c <= 2500) else "  ⚠"
         print(f"{p.ljust(width)}  {str(c).rjust(5)}  {r}{flag}")
-    print(f"\n{len(report)} pages built, {len(sitemap_urls)} in sitemap.")
+    print(f"\n{len(report)} pages built, {len(sitemap_entries)} in sitemap.")
 
 
 if __name__ == "__main__":

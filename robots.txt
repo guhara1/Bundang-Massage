@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://www.bundang-barogo.example.com/sitemap.xml
+Sitemap: https://bundang-massage.pages.dev/sitemap.xml
