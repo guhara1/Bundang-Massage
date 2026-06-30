@@ -47,7 +47,7 @@ python3 build.py
 
 ## 색인 (네이버·구글 빠른 색인)
 
-도메인: **https://bundang-massage.pages.dev** (`content/site.py`의 `BASE_URL`)
+도메인: **https://bundang-massage.netlify.app** (`content/site.py`의 `BASE_URL`)
 
 빌드 시 자동 생성되는 색인 파일:
 
@@ -66,8 +66,8 @@ python3 tools/notify_search.py --google sa.json     # + 구글 Indexing API (서
 1회 수동 등록:
 
 1. **네이버 서치어드바이저** — 소유확인(메인페이지 메타태그 등록됨) 후
-   `요청 > 사이트맵 제출`에 `https://bundang-massage.pages.dev/sitemap.xml`,
-   `요청 > RSS 제출`에 `https://bundang-massage.pages.dev/rss.xml` 제출.
+   `요청 > 사이트맵 제출`에 `https://bundang-massage.netlify.app/sitemap.xml`,
+   `요청 > RSS 제출`에 `https://bundang-massage.netlify.app/rss.xml` 제출.
    급한 페이지는 `요청 > 웹 페이지 수집`으로 개별 요청
 2. **Google Search Console** — 속성 등록 후 `Sitemaps`에 `sitemap.xml` 제출.
    주요 페이지는 `URL 검사 > 색인 생성 요청`. (구글은 IndexNow 미참여,
