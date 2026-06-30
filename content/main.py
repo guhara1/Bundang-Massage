@@ -1,73 +1,7 @@
 # 메인 페이지 — 분당 허브. 키워드를 한곳에 몰지 않고 지역·역·테마 상세 페이지로 연결한다.
+# LocalBusiness/FAQPage/AggregateRating 등 구조화 데이터는 build.py 에서 전 페이지 공통 생성한다.
 from .site import BASE_URL, BRAND, PHONE, PHONE_DISPLAY
 from .pricing import PRICING
-
-_JSONLD = f"""<script type="application/ld+json">
-{{
-  "@context": "https://schema.org",
-  "@type": "HealthAndBeautyBusiness",
-  "name": "{BRAND}",
-  "telephone": "{PHONE}",
-  "url": "{BASE_URL}/",
-  "image": "{BASE_URL}/assets/og-image.png",
-  "description": "분당구 전지역 방문 출장마사지·홈타이 예약 안내",
-  "areaServed": {{
-    "@type": "AdministrativeArea",
-    "name": "경기도 성남시 분당구"
-  }},
-  "openingHours": "Mo-Su 00:00-24:00",
-  "priceRange": "₩90,000 - ₩180,000"
-}}
-</script>
-<script type="application/ld+json">
-{{
-  "@context": "https://schema.org",
-  "@type": "FAQPage",
-  "mainEntity": [
-    {{
-      "@type": "Question",
-      "name": "분당구 전지역 방문이 가능한가요?",
-      "acceptedAnswer": {{
-        "@type": "Answer",
-        "text": "정자동, 서현동, 야탑동부터 판교 일대와 율동 같은 외곽까지 18개 법정동 기준으로 안내하며, 실제 가능 여부는 예약 시간과 위치에 따라 상담에서 확정됩니다."
-      }}
-    }},
-    {{
-      "@type": "Question",
-      "name": "서현역이나 판교역 근처 숙소도 가능한가요?",
-      "acceptedAnswer": {{
-        "@type": "Answer",
-        "text": "주요 역세권 9곳은 역 상세 페이지에서 안내합니다. 역 이름과 건물명을 알려주시면 가능 여부를 바로 확인해 드립니다."
-      }}
-    }},
-    {{
-      "@type": "Question",
-      "name": "수내1동 같은 행정동 페이지는 왜 없나요?",
-      "acceptedAnswer": {{
-        "@type": "Answer",
-        "text": "숫자 행정동은 같은 생활권을 나눈 단위라서 수내동, 정자동 등 법정동 대표 페이지에서 통합해 안내합니다."
-      }}
-    }},
-    {{
-      "@type": "Question",
-      "name": "당일 예약도 가능한가요?",
-      "acceptedAnswer": {{
-        "@type": "Answer",
-        "text": "배정 여유가 있으면 진행됩니다. 저녁과 주말에는 문의가 몰리니 한두 시간 이상 여유를 두시길 권장합니다."
-      }}
-    }},
-    {{
-      "@type": "Question",
-      "name": "테마는 어떻게 고르면 되나요?",
-      "acceptedAnswer": {{
-        "@type": "Answer",
-        "text": "테마별 안내에서 14개 테마의 특징과 추천 대상을 비교할 수 있고, 고르기 어려우면 전화로 컨디션을 말씀해 주세요."
-      }}
-    }}
-  ]
-}}
-</script>
-"""
 
 _HERO = f"""<section class="hero">
   <div class="hero-inner">
@@ -102,25 +36,25 @@ _BODY = f"""
 <section id="areas">
 <h2>지역별 안내</h2>
 <p>탄천을 따라 늘어선 신도시 중심부, 판교테크노밸리 일대, 구미동·금곡동 같은 남부 주거권까지 동마다 생활권 성격이 다릅니다. 각 페이지에서 해당 동의 특징, 가까운 역, 방문 형태, 예약 팁을 고유한 내용으로 다루니 거주하시거나 머무시는 동을 골라 주세요.</p>
-<ul class="card-grid">
-<li><a href="/bundang/bundang-dong/">분당동</a></li>
-<li><a href="/bundang/sunae-dong/">수내동</a></li>
-<li><a href="/bundang/jeongja-dong/">정자동</a></li>
-<li><a href="/bundang/seohyeon-dong/">서현동</a></li>
-<li><a href="/bundang/imae-dong/">이매동</a></li>
-<li><a href="/bundang/yatap-dong/">야탑동</a></li>
-<li><a href="/bundang/gumi-dong/">구미동</a></li>
-<li><a href="/bundang/geumgok-dong/">금곡동</a></li>
-<li><a href="/bundang/gungnae-dong/">궁내동</a></li>
-<li><a href="/bundang/dongwon-dong/">동원동</a></li>
-<li><a href="/bundang/baekhyeon-dong/">백현동</a></li>
-<li><a href="/bundang/sampyeong-dong/">삼평동</a></li>
-<li><a href="/bundang/pangyo-dong/">판교동</a></li>
-<li><a href="/bundang/unjung-dong/">운중동</a></li>
-<li><a href="/bundang/daejang-dong/">대장동</a></li>
-<li><a href="/bundang/seogun-dong/">석운동</a></li>
-<li><a href="/bundang/yul-dong/">율동</a></li>
-<li><a href="/bundang/hasanun-dong/">하산운동</a></li>
+<ul class="link-grid">
+<li><a href="/bundang/bundang-dong/"><span class="lg-t">분당동 출장마사지</span><span class="lg-s">불곡산 자락 조용한 주거지 방문</span></a></li>
+<li><a href="/bundang/sunae-dong/"><span class="lg-t">수내동 출장마사지</span><span class="lg-s">중앙공원·수내역 도보권 홈타이</span></a></li>
+<li><a href="/bundang/jeongja-dong/"><span class="lg-t">정자동 출장마사지</span><span class="lg-s">카페거리·정자역 심야 방문</span></a></li>
+<li><a href="/bundang/seohyeon-dong/"><span class="lg-t">서현동 출장마사지</span><span class="lg-s">서현역 상권 인근 자택·숙소</span></a></li>
+<li><a href="/bundang/imae-dong/"><span class="lg-t">이매동 출장마사지</span><span class="lg-s">이매역 인근 아파트촌 방문</span></a></li>
+<li><a href="/bundang/yatap-dong/"><span class="lg-t">야탑동 출장마사지</span><span class="lg-s">야탑역·터미널 24시간 권역</span></a></li>
+<li><a href="/bundang/gumi-dong/"><span class="lg-t">구미동 출장마사지</span><span class="lg-s">미금역·오리역 남부 주거권</span></a></li>
+<li><a href="/bundang/geumgok-dong/"><span class="lg-t">금곡동 출장마사지</span><span class="lg-s">정자권 인접 생활권 홈타이</span></a></li>
+<li><a href="/bundang/gungnae-dong/"><span class="lg-t">궁내동 출장마사지</span><span class="lg-s">분당 남단 전원형 주거지</span></a></li>
+<li><a href="/bundang/dongwon-dong/"><span class="lg-t">동원동 출장마사지</span><span class="lg-s">청계산 자락 저밀도 권역</span></a></li>
+<li><a href="/bundang/baekhyeon-dong/"><span class="lg-t">백현동 출장마사지</span><span class="lg-s">판교 카페거리·아파트 방문</span></a></li>
+<li><a href="/bundang/sampyeong-dong/"><span class="lg-t">삼평동 출장마사지</span><span class="lg-s">판교테크노밸리 오피스 인근</span></a></li>
+<li><a href="/bundang/pangyo-dong/"><span class="lg-t">판교동 출장마사지</span><span class="lg-s">판교역 신도시 중심 홈타이</span></a></li>
+<li><a href="/bundang/unjung-dong/"><span class="lg-t">운중동 출장마사지</span><span class="lg-s">운중천·판교 서편 주거권</span></a></li>
+<li><a href="/bundang/daejang-dong/"><span class="lg-t">대장동 출장마사지</span><span class="lg-s">신규 택지 주거권 방문</span></a></li>
+<li><a href="/bundang/seogun-dong/"><span class="lg-t">석운동 출장마사지</span><span class="lg-s">청계산 전원 주택 권역</span></a></li>
+<li><a href="/bundang/yul-dong/"><span class="lg-t">율동 출장마사지</span><span class="lg-s">율동공원 인근 외곽 방문</span></a></li>
+<li><a href="/bundang/hasanun-dong/"><span class="lg-t">하산운동 출장마사지</span><span class="lg-s">분당 남서단 전원 권역</span></a></li>
 </ul>
 <p>분당구 전체 구조는 <a href="/bundang/">지역 전체 안내</a>에서 한 번에 볼 수 있습니다.</p>
 </section>
@@ -128,37 +62,56 @@ _BODY = f"""
 <section id="stations">
 <h2>지하철역 인근 안내</h2>
 <p>분당구는 수인분당선과 신분당선이 남북으로 지나고, 판교역에는 경강선, 성남역에는 GTX-A가 더해진 지역입니다. 역 안내는 아홉 개 주요 역 기준이며, 두 노선이 만나는 환승역도 페이지는 하나만 운영합니다. 출구별 페이지는 만들지 않고, 정확한 위치는 예약 통화에서 건물 기준으로 확인합니다.</p>
-<ul class="card-grid">
-<li><a href="/bundang/stations/yatap-station/">야탑역</a></li>
-<li><a href="/bundang/stations/imae-station/">이매역</a></li>
-<li><a href="/bundang/stations/seohyeon-station/">서현역</a></li>
-<li><a href="/bundang/stations/sunae-station/">수내역</a></li>
-<li><a href="/bundang/stations/jeongja-station/">정자역</a></li>
-<li><a href="/bundang/stations/migeum-station/">미금역</a></li>
-<li><a href="/bundang/stations/ori-station/">오리역</a></li>
-<li><a href="/bundang/stations/pangyo-station/">판교역</a></li>
-<li><a href="/bundang/stations/seongnam-station/">성남역</a></li>
+<ul class="link-grid">
+<li><a href="/bundang/stations/yatap-station/"><span class="lg-t">야탑역 출장마사지</span><span class="lg-s">분당선·터미널 환승 거점 홈타이</span></a></li>
+<li><a href="/bundang/stations/imae-station/"><span class="lg-t">이매역 출장마사지</span><span class="lg-s">분당선·경강선 환승 인근</span></a></li>
+<li><a href="/bundang/stations/seohyeon-station/"><span class="lg-t">서현역 출장마사지</span><span class="lg-s">분당 최대 역세권 숙소·자택</span></a></li>
+<li><a href="/bundang/stations/sunae-station/"><span class="lg-t">수내역 출장마사지</span><span class="lg-s">중앙공원·업무지구 홈타이</span></a></li>
+<li><a href="/bundang/stations/jeongja-station/"><span class="lg-t">정자역 출장마사지</span><span class="lg-s">분당선·신분당 환승 카페거리</span></a></li>
+<li><a href="/bundang/stations/migeum-station/"><span class="lg-t">미금역 출장마사지</span><span class="lg-s">분당선·신분당 환승 남부권</span></a></li>
+<li><a href="/bundang/stations/ori-station/"><span class="lg-t">오리역 출장마사지</span><span class="lg-s">분당선 남단 종착 권역</span></a></li>
+<li><a href="/bundang/stations/pangyo-station/"><span class="lg-t">판교역 출장마사지</span><span class="lg-s">신분당·경강 테크노밸리 인근</span></a></li>
+<li><a href="/bundang/stations/seongnam-station/"><span class="lg-t">성남역 출장마사지</span><span class="lg-s">GTX-A·신분당 광역환승 거점</span></a></li>
 </ul>
 </section>
 
 <section id="themes">
 <h2>테마별 관리 안내</h2>
 <p>관리 테마는 14개 독립 페이지에서 기법의 특징과 추천 대상, 받기 전 확인사항을 설명합니다. 동이나 역과 테마를 묶은 조합 페이지는 운영하지 않는데, 어느 위치든 같은 테마라면 진행 방식이 같아 내용만 중복되기 때문입니다. 테마를 먼저 정하고 위치는 예약 시 알려주시면 충분합니다.</p>
-<ul class="card-grid">
-<li><a href="/themes/swedish/">스웨디시</a></li>
-<li><a href="/themes/lomilomi/">로미로미</a></li>
-<li><a href="/themes/thai/">타이마사지</a></li>
-<li><a href="/themes/chinese/">중국마사지</a></li>
-<li><a href="/themes/aroma/">아로마테라피</a></li>
-<li><a href="/themes/homecare/">홈케어</a></li>
-<li><a href="/themes/hotel-style/">호텔식마사지</a></li>
-<li><a href="/themes/foot/">발마사지</a></li>
-<li><a href="/themes/sports/">스포츠·경락</a></li>
-<li><a href="/themes/skincare/">스킨케어</a></li>
-<li><a href="/themes/waxing/">왁싱</a></li>
-<li><a href="/themes/couple/">커플 관리</a></li>
-<li><a href="/themes/24hours/">24시간</a></li>
-<li><a href="/themes/overnight/">수면 가능</a></li>
+<ul class="link-grid">
+<li><a href="/themes/swedish/"><span class="lg-t">스웨디시 마사지</span><span class="lg-s">부드러운 압·수면 개선</span></a></li>
+<li><a href="/themes/lomilomi/"><span class="lg-t">로미로미 마사지</span><span class="lg-s">하와이안 오일 릴랙스</span></a></li>
+<li><a href="/themes/thai/"><span class="lg-t">타이마사지</span><span class="lg-s">스트레칭·전신 이완</span></a></li>
+<li><a href="/themes/chinese/"><span class="lg-t">중국마사지</span><span class="lg-s">경혈 지압·뭉침 케어</span></a></li>
+<li><a href="/themes/aroma/"><span class="lg-t">아로마테라피</span><span class="lg-s">오일 향기 힐링 관리</span></a></li>
+<li><a href="/themes/homecare/"><span class="lg-t">홈케어 마사지</span><span class="lg-s">집 환경 맞춤 방문 관리</span></a></li>
+<li><a href="/themes/hotel-style/"><span class="lg-t">호텔식 마사지</span><span class="lg-s">정중한 프리미엄 진행</span></a></li>
+<li><a href="/themes/foot/"><span class="lg-t">발마사지</span><span class="lg-s">다리 피로·부종 완화</span></a></li>
+<li><a href="/themes/sports/"><span class="lg-t">스포츠·경락 마사지</span><span class="lg-s">운동 후 근육 회복</span></a></li>
+<li><a href="/themes/skincare/"><span class="lg-t">스킨케어 방문 관리</span><span class="lg-s">피부 톤·컨디션 케어</span></a></li>
+<li><a href="/themes/waxing/"><span class="lg-t">출장 왁싱</span><span class="lg-s">위생적 방문 제모 관리</span></a></li>
+<li><a href="/themes/couple/"><span class="lg-t">커플 마사지</span><span class="lg-s">2인 동시 진행 방문</span></a></li>
+<li><a href="/themes/24hours/"><span class="lg-t">24시간 출장마사지</span><span class="lg-s">새벽·심야 예약 가능</span></a></li>
+<li><a href="/themes/overnight/"><span class="lg-t">수면 가능 마사지</span><span class="lg-s">숙박 동반 장시간 관리</span></a></li>
+</ul>
+</section>
+
+<section id="topics">
+<h2>자주 찾는 주제별 안내</h2>
+<p>상황과 목적에 맞는 주제로도 바로 찾아보실 수 있습니다. 아래 링크는 지역·역·테마 안내와 매거진 가이드 중 관련 페이지로 연결됩니다.</p>
+<ul class="topic-links">
+<li><a href="/themes/24hours/">심야·새벽 출장마사지</a></li>
+<li><a href="/themes/overnight/">숙소·호텔 홈타이</a></li>
+<li><a href="/themes/couple/">커플 함께 받는 마사지</a></li>
+<li><a href="/themes/sports/">운동 후 회복 마사지</a></li>
+<li><a href="/magazine/post-workout-timing/">운동 후 마사지 타이밍</a></li>
+<li><a href="/magazine/neck-shoulder-care/">어깨·목 결림 관리</a></li>
+<li><a href="/magazine/sleep-and-massage/">불면·수면을 위한 마사지</a></li>
+<li><a href="/magazine/parents-gift/">부모님 선물 마사지 예약</a></li>
+<li><a href="/magazine/first-time-guide/">처음 받는 출장마사지 가이드</a></li>
+<li><a href="/magazine/swedish-vs-thai/">스웨디시·타이 비교</a></li>
+<li><a href="/bundang/stations/seohyeon-station/">서현역 근처 홈타이</a></li>
+<li><a href="/bundang/stations/pangyo-station/">판교역 근처 출장마사지</a></li>
 </ul>
 </section>
 
@@ -220,7 +173,7 @@ PAGE = {
     "desc": "분당 출장마사지·홈타이 안내입니다. 정자동, 서현동, 야탑동, 판교동 등 지역·지하철역·테마별 관리와 예약 안내를 확인해보세요.",
     "h1": "분당 출장마사지·홈타이 예약 안내",
     "body": _BODY,
-    "extra_head": '<meta name="naver-site-verification" content="ecbf20e63800fac1c2fd954421bb9b09d9d45ac9" />\n' + _JSONLD,
+    "extra_head": '<meta name="naver-site-verification" content="b5385ebd6f88dae26a58f366236d68dd9bab9ba0" />\n',
     "breadcrumb": [],
     "hero": _HERO,
 }

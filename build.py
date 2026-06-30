@@ -10,6 +10,7 @@ content/ 패키지의 페이지 정의를 읽어 정적 HTML을 생성한다.
 """
 import datetime
 import html
+import json
 import os
 import re
 import shutil
@@ -19,9 +20,236 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from content import PAGES
 from content.site import (BASE_URL, BRAND, BRAND_MARK, NAV, PHONE, PHONE_DISPLAY)
+from content import reviews_data
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
 MIN_INDEX_CHARS = 2000
+BASE = BASE_URL.rstrip("/")
+OPENING_HOURS = "Mo-Su 00:00-24:00"
+PRICE_RANGE = "₩90,000 - ₩180,000"
+AREA_PROVINCE = "경기도 성남시 분당구"
+
+# 후기·평점 구조화 데이터를 함께 출력하는 페이지 유형
+REVIEW_KINDS = {
+    "home", "reviews", "area_hub", "area", "station_hub", "station",
+    "theme_hub", "theme", "service_hub", "courses",
+}
+
+
+def page_kind(path: str) -> str:
+    if path == "":
+        return "home"
+    if path == "reviews/":
+        return "reviews"
+    if path == "bundang/":
+        return "area_hub"
+    if path == "bundang/stations/":
+        return "station_hub"
+    if path.startswith("bundang/stations/"):
+        return "station"
+    if path.startswith("bundang/"):
+        return "area"
+    if path == "themes/":
+        return "theme_hub"
+    if path.startswith("themes/"):
+        return "theme"
+    if path == "massage/":
+        return "service_hub"
+    if path == "courses/":
+        return "courses"
+    return "other"
+
+
+def reviews_for(kind: str, path: str):
+    """페이지 유형에 맞는 후기 묶음 — 노출 HTML과 JSON-LD가 같은 묶음을 공유한다."""
+    if kind == "reviews":
+        return list(reviews_data.REVIEWS)
+    sub = []
+    parts = path.split("/")
+    if kind == "area":
+        sub = reviews_data.for_area(parts[1])
+    elif kind == "station":
+        sub = reviews_data.for_station(parts[2])
+    elif kind == "theme":
+        sub = reviews_data.for_theme(parts[1])
+    return (sub or list(reviews_data.REVIEWS))[:3]
+
+
+def _stars(n: int) -> str:
+    return "★" * n + "☆" * (5 - n)
+
+
+def render_reviews(subset, kind: str) -> str:
+    agg = reviews_data.aggregate()
+    score = agg["ratingValue"]
+    summary = (
+        '<div class="review-summary">'
+        f'<span class="review-score">{score}</span>'
+        f'<span class="review-stars review-stars-lg" aria-hidden="true">{_stars(round(float(score)))}</span>'
+        f'<span class="review-count">이용자 평점 {score} / 5 · 후기 {agg["reviewCount"]}건</span>'
+        "</div>"
+    )
+    cards = []
+    for r in subset:
+        cards.append(
+            '<li class="review-card">'
+            '<div class="review-head">'
+            f'<span class="review-stars" aria-label="별점 {r["rating"]}점">{_stars(r["rating"])}</span>'
+            f'<span class="review-name">{r["name"]}</span>'
+            "</div>"
+            f'<p class="review-body">{r["body"]}</p>'
+            '<p class="review-meta">'
+            f'<span>{r["area"]}</span><span>{r["theme"]}</span>'
+            f'<time datetime="{r["date"]}">{r["date"].replace("-", ". ")}</time>'
+            "</p>"
+            "</li>"
+        )
+    more = (
+        ""
+        if kind == "reviews"
+        else '<p class="review-more"><a href="/reviews/">전체 이용 후기 보기 →</a></p>'
+    )
+    return (
+        '<section id="reviews-block" class="reviews-block">'
+        "<h2>이용 후기</h2>"
+        f"{summary}"
+        f'<ul class="review-list">{"".join(cards)}</ul>'
+        f"{more}"
+        "</section>\n"
+    )
+
+
+def _plain(s: str) -> str:
+    s = re.sub(r"<[^>]+>", " ", s)
+    s = html.unescape(s)
+    return re.sub(r"\s+", " ", s).strip()
+
+
+def _ld(obj) -> str:
+    return (
+        '<script type="application/ld+json">\n'
+        + json.dumps(obj, ensure_ascii=False, indent=2)
+        + "\n</script>\n"
+    )
+
+
+def _breadcrumb_obj(page, canonical):
+    crumbs = page.get("breadcrumb") or []
+    if not crumbs:
+        return None
+    items = [{"@type": "ListItem", "position": 1, "name": "홈", "item": BASE + "/"}]
+    for i, (label, href) in enumerate(crumbs, start=2):
+        items.append({
+            "@type": "ListItem", "position": i, "name": label,
+            "item": (BASE + href) if href else canonical,
+        })
+    return {"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": items}
+
+
+def _faq_obj(body):
+    pairs = re.findall(
+        r'<div class="faq-item">\s*<h3>(.*?)</h3>\s*<p>(.*?)</p>', body, flags=re.S
+    )
+    if not pairs:
+        return None
+    ent = [
+        {"@type": "Question", "name": _plain(q),
+         "acceptedAnswer": {"@type": "Answer", "text": _plain(a)}}
+        for q, a in pairs
+    ]
+    return {"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": ent}
+
+
+def _agg_obj():
+    agg = reviews_data.aggregate()
+    return {
+        "@type": "AggregateRating",
+        "ratingValue": agg["ratingValue"],
+        "reviewCount": agg["reviewCount"],
+        "bestRating": "5",
+        "worstRating": "1",
+    }
+
+
+def _review_objs(subset):
+    out = []
+    for r in subset:
+        out.append({
+            "@type": "Review",
+            "author": {"@type": "Person", "name": r["name"]},
+            "datePublished": r["date"],
+            "reviewRating": {
+                "@type": "Rating", "ratingValue": str(r["rating"]),
+                "bestRating": "5", "worstRating": "1",
+            },
+            "reviewBody": r["body"],
+        })
+    return out
+
+
+def _business_obj(page, kind, canonical, subset):
+    crumbs = page.get("breadcrumb") or []
+    label = crumbs[-1][0] if crumbs else ""
+    if kind in ("theme", "theme_hub"):
+        obj = {
+            "@context": "https://schema.org",
+            "@type": "Service",
+            "serviceType": (f"{label} 출장마사지·홈타이" if kind == "theme" and label
+                            else "분당 출장마사지·홈타이"),
+            "name": (f"{label} 방문 관리" if kind == "theme" and label else "분당 방문 관리"),
+            "provider": {
+                "@type": "HealthAndBeautyBusiness", "name": BRAND,
+                "telephone": PHONE, "url": BASE + "/",
+            },
+            "areaServed": {"@type": "AdministrativeArea", "name": AREA_PROVINCE},
+            "url": canonical,
+        }
+    else:
+        name = BRAND
+        if kind in ("area", "station") and label:
+            name = f"{BRAND} — {label} 방문 관리"
+        served = AREA_PROVINCE
+        if kind == "area" and label:
+            served = f"{AREA_PROVINCE} {label}"
+        obj = {
+            "@context": "https://schema.org",
+            "@type": "HealthAndBeautyBusiness",
+            "name": name,
+            "telephone": PHONE,
+            "url": canonical,
+            "image": BASE + "/assets/og-image.png",
+            "description": page.get("desc", ""),
+            "areaServed": {"@type": "AdministrativeArea", "name": served},
+            "openingHours": OPENING_HOURS,
+            "priceRange": PRICE_RANGE,
+        }
+    obj["aggregateRating"] = _agg_obj()
+    obj["review"] = _review_objs(subset)
+    return obj
+
+
+def build_schema(page, kind, canonical, body, subset):
+    blocks = []
+    bc = _breadcrumb_obj(page, canonical)
+    if bc:
+        blocks.append(bc)
+    faq = _faq_obj(body)
+    if faq:
+        blocks.append(faq)
+    if kind in REVIEW_KINDS:
+        blocks.append(_business_obj(page, kind, canonical, subset))
+    if kind == "home":
+        blocks.append({
+            "@context": "https://schema.org", "@type": "WebSite",
+            "name": BRAND, "url": BASE + "/",
+        })
+        blocks.append({
+            "@context": "https://schema.org", "@type": "Organization",
+            "name": BRAND, "url": BASE + "/",
+            "logo": BASE + "/assets/icon-512.png",
+            "telephone": PHONE,
+        })
+    return "".join(_ld(b) for b in blocks)
 
 
 def text_length(body_html: str) -> int:
@@ -124,6 +352,21 @@ def render_page(page: dict) -> str:
     )
     canonical = BASE_URL.rstrip("/") + "/" + path
 
+    # 구조화 데이터(JSON-LD)와 노출 후기는 같은 후기 묶음을 공유한다.
+    kind = page_kind(path)
+    subset = reviews_for(kind, path) if kind in REVIEW_KINDS else []
+    schema_html = build_schema(page, kind, canonical, body, subset)
+
+    # 평점·후기 블록을 예약 CTA 바로 앞에 끼워 넣는다(후기 노출 = 평점 스키마 근거).
+    if subset:
+        rv = render_reviews(subset, kind)
+        for marker in ('<section id="contact" class="cta">', '<section class="cta">'):
+            if marker in body:
+                body = body.replace(marker, rv + marker, 1)
+                break
+        else:
+            body += rv
+
     # 히어로가 있는 페이지(메인)는 H1을 히어로 안에서 출력한다.
     if hero:
         page_head = hero
@@ -165,7 +408,7 @@ def render_page(page: dict) -> str:
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&family=Noto+Serif+KR:wght@600;700;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/assets/style.css">
-{extra_head}</head>
+{extra_head}{schema_html}</head>
 <body>
 <header class="site-header">
   <div class="header-accent" aria-hidden="true"></div>

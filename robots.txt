@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://bundang-massage.pages.dev/sitemap.xml
+Sitemap: https://bundang-massage.netlify.app/sitemap.xml

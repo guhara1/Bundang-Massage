@@ -1,5 +1,5 @@
 # 사이트 공통 설정
-BASE_URL = "https://bundang-massage.pages.dev"
+BASE_URL = "https://bundang-massage.netlify.app"
 
 BRAND = "바로GO"
 BRAND_MARK = "B"
